@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>磁铁画板 · 排料记录器</title>
+    <title>Magnetic Board · Nesting Recorder</title>
     <style>
         * {
             box-sizing: border-box;
@@ -33,24 +33,37 @@
 
         .top-bar {
             display: flex;
-            align-items: center;
-            justify-content: space-between;
+            flex-direction: column;
             gap: 10px;
             margin-bottom: 10px;
             padding: 0 4px;
-            flex-wrap: wrap;
         }
 
-        .selector-group {
+        .top-row {
             display: flex;
-            gap: 8px;
-            align-items: center;
-            flex-wrap: wrap;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .selector-block {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .selector-title {
+            color: #7a7a7a;
+            font-size: 0.62rem;
+            font-weight: 700;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            padding-left: 10px;
         }
 
         .size-selector {
             display: flex;
-            gap: 8px;
+            gap: 6px;
             background: #1f1f1f;
             padding: 6px;
             border-radius: 60px;
@@ -78,24 +91,28 @@
 
         .source-selector {
             display: flex;
-            gap: 6px;
+            gap: 4px;
             background: #1f1f1f;
-            padding: 6px;
+            padding: 5px;
             border-radius: 60px;
             box-shadow: inset 0 2px 5px #0b0b0b;
+            width: 100%;
         }
 
         .source-btn {
             background: transparent;
             border: none;
-            padding: 8px 12px;
+            padding: 8px 6px;
             border-radius: 40px;
             font-weight: 600;
-            font-size: 0.78rem;
+            font-size: 0.72rem;
             color: #9a9a9a;
             transition: all 0.15s;
             cursor: pointer;
+            flex: 1;
             white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .source-btn.active {
@@ -112,13 +129,7 @@
             padding: 4px 6px;
             border-radius: 50px;
             box-shadow: inset 0 2px 5px #0b0b0b;
-        }
-
-        .counter-label {
-            color: #b0b0b0;
-            font-size: 0.8rem;
-            font-weight: 500;
-            letter-spacing: 0.5px;
+            flex-shrink: 0;
         }
 
         .counter-value {
@@ -128,16 +139,43 @@
             font-weight: 700;
             font-size: 1.3rem;
             color: #ffd966;
-            min-width: 60px;
+            min-width: 50px;
             text-align: center;
             box-shadow: inset 0 1px 4px #00000066;
         }
 
+        /* 加号：红色底色 */
         .plus-btn {
+            background: #c0392b;
+            border: none;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            font-size: 1.8rem;
+            font-weight: 400;
+            line-height: 1;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 6px 0 #7a1f14, 0 6px 12px black;
+            transition: all 0.05s linear;
+            cursor: pointer;
+            transform: translateY(-2px);
+            touch-action: manipulation;
+        }
+
+        .plus-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #7a1f14, 0 4px 8px black;
+        }
+
+        /* 减号：蓝色底色 */
+        .minus-btn {
             background: #3d5a80;
             border: none;
-            width: 44px;
-            height: 44px;
+            width: 42px;
+            height: 42px;
             border-radius: 50%;
             font-size: 1.8rem;
             font-weight: 400;
@@ -153,34 +191,9 @@
             touch-action: manipulation;
         }
 
-        .plus-btn:active {
-            transform: translateY(4px);
-            box-shadow: 0 2px 0 #1d2e42, 0 4px 8px black;
-        }
-
-        .minus-btn {
-            background: #5a3d3d;
-            border: none;
-            width: 44px;
-            height: 44px;
-            border-radius: 50%;
-            font-size: 1.8rem;
-            font-weight: 400;
-            line-height: 1;
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 6px 0 #3a2626, 0 6px 12px black;
-            transition: all 0.05s linear;
-            cursor: pointer;
-            transform: translateY(-2px);
-            touch-action: manipulation;
-        }
-
         .minus-btn:active:not(:disabled) {
             transform: translateY(4px);
-            box-shadow: 0 2px 0 #3a2626, 0 4px 8px black;
+            box-shadow: 0 2px 0 #1d2e42, 0 4px 8px black;
         }
 
         .minus-btn:disabled {
@@ -191,23 +204,11 @@
             opacity: 0.7;
         }
 
-        .board-container {
-            background: #0f0f0f;
-            border-radius: 20px;
-            padding: 14px;
-            margin: 10px 0 14px;
-            box-shadow: inset 0 6px 12px black, 0 8px 16px #00000080;
-            display: flex;
-            gap: 10px;
-            align-items: stretch;
-        }
-
+        /* 模式切换：横排，放在画板上方 */
         .mode-switch {
             display: none;
-            flex-direction: column;
             gap: 8px;
-            width: 44px;
-            flex-shrink: 0;
+            margin-bottom: 8px;
         }
 
         .mode-switch.visible {
@@ -218,18 +219,16 @@
             flex: 1;
             background: #2e2e2e;
             border: 1px solid #3a3a3a;
-            border-radius: 10px;
+            border-radius: 12px;
             color: #9a9a9a;
-            font-size: 0.7rem;
+            font-size: 0.78rem;
             font-weight: 600;
             cursor: pointer;
-            padding: 6px 2px;
-            writing-mode: vertical-rl;
-            text-orientation: upright;
-            letter-spacing: 3px;
+            padding: 10px 8px;
+            letter-spacing: 0.3px;
             transition: all 0.15s;
-            min-height: 60px;
             box-shadow: inset 0 -2px 0 #1a1a1a;
+            white-space: nowrap;
         }
 
         .mode-btn.active[data-mode="initial"] {
@@ -246,6 +245,14 @@
             box-shadow: 0 0 10px rgba(245, 197, 66, 0.6);
         }
 
+        .board-container {
+            background: #0f0f0f;
+            border-radius: 20px;
+            padding: 14px;
+            margin: 10px 0 14px;
+            box-shadow: inset 0 6px 12px black, 0 8px 16px #00000080;
+        }
+
         .grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -253,8 +260,6 @@
             gap: 10px;
             aspect-ratio: 4 / 2;
             width: 100%;
-            flex: 1;
-            min-width: 0;
         }
 
         .cell {
@@ -280,12 +285,22 @@
             border-color: #ffd966;
         }
 
+        .options-title {
+            color: #7a7a7a;
+            font-size: 0.62rem;
+            font-weight: 700;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            padding-left: 18px;
+            margin-bottom: 6px;
+        }
+
         .options {
             display: flex;
-            gap: 16px;
+            gap: 14px;
             background: #1f1f1f;
             padding: 14px 16px;
-            border-radius: 50px;
+            border-radius: 24px;
             margin: 12px 0 14px;
             box-shadow: inset 0 2px 6px black;
         }
@@ -293,10 +308,10 @@
         .option-item {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
             color: #e0e0e0;
             font-weight: 500;
-            font-size: 1rem;
+            font-size: 0.82rem;
             flex: 1;
             cursor: pointer;
         }
@@ -308,6 +323,7 @@
             border-radius: 6px;
             cursor: pointer;
             margin: 0;
+            flex-shrink: 0;
         }
 
         .stats {
@@ -319,19 +335,20 @@
         .stat-card {
             background: #212121;
             border-radius: 16px;
-            padding: 14px 8px;
+            padding: 14px 6px;
             flex: 1;
             text-align: center;
             box-shadow: inset 0 3px 6px #00000099, 0 4px 8px black;
         }
 
         .stat-label {
-            font-size: 0.7rem;
+            font-size: 0.6rem;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.3px;
             color: #9e9e9e;
-            font-weight: 600;
+            font-weight: 700;
             margin-bottom: 6px;
+            line-height: 1.2;
         }
 
         .stat-value {
@@ -343,7 +360,7 @@
         }
 
         .stat-sub {
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             color: #7a7a7a;
             margin-top: 4px;
         }
@@ -386,30 +403,40 @@
 <body>
     <div class="app">
         <div class="top-bar">
-            <div class="selector-group">
-                <div class="size-selector">
-                    <button class="size-btn active" data-size="4x8">4' x 8'</button>
-                    <button class="size-btn" data-size="5x10">5' x 10'</button>
+            <div class="top-row">
+                <div class="selector-block">
+                    <div class="selector-title">Size</div>
+                    <div class="size-selector">
+                        <button class="size-btn active" data-size="4x8">4' x 8'</button>
+                        <button class="size-btn" data-size="5x10">5' x 10'</button>
+                    </div>
                 </div>
-                <div class="source-selector">
-                    <button class="source-btn active" data-source="new">完整新料</button>
-                    <button class="source-btn" data-source="scrap">剩料</button>
-                    <button class="source-btn" data-source="warehouse">仓库剩料</button>
+                <div class="selector-block">
+                    <div class="selector-title">Quantity</div>
+                    <div class="piece-counter">
+                        <button class="minus-btn" id="minusBtn" aria-label="Decrease quantity" disabled>−</button>
+                        <span class="counter-value" id="pieceCountDisplay">1</span>
+                        <button class="plus-btn" id="plusBtn" aria-label="Increase quantity">+</button>
+                    </div>
                 </div>
             </div>
-            <div class="piece-counter">
-                <button class="minus-btn" id="minusBtn" aria-label="减少片数" disabled>−</button>
-                <span class="counter-label">片数</span>
-                <span class="counter-value" id="pieceCountDisplay">1</span>
-                <button class="plus-btn" id="plusBtn" aria-label="增加片数">+</button>
+
+            <div class="selector-block">
+                <div class="selector-title">Source</div>
+                <div class="source-selector">
+                    <button class="source-btn active" data-source="new">Full Sheet</button>
+                    <button class="source-btn" data-source="warehouse">Storage Remnants</button>
+                    <button class="source-btn" data-source="scrap">Mixed Leftover</button>
+                </div>
             </div>
         </div>
 
+        <div class="mode-switch" id="modeSwitch">
+            <button class="mode-btn active" data-mode="initial">Initial Remnants</button>
+            <button class="mode-btn" data-mode="usage">Current Usage</button>
+        </div>
+
         <div class="board-container">
-            <div class="mode-switch" id="modeSwitch">
-                <button class="mode-btn active" data-mode="initial">初始剩料</button>
-                <button class="mode-btn" data-mode="usage">使用面积</button>
-            </div>
             <div class="grid" id="boardGrid">
                 <div class="cell" data-index="0"></div>
                 <div class="cell" data-index="1"></div>
@@ -422,34 +449,35 @@
             </div>
         </div>
 
+        <div class="options-title">Remainder Goes To</div>
         <div class="options">
             <label class="option-item">
-                <input type="checkbox" id="returnWarehouseCheckbox"> 放回仓库
+                <input type="checkbox" id="returnWarehouseCheckbox"> Return to Storage
             </label>
             <label class="option-item">
-                <input type="checkbox" id="scrapAreaCheckbox" checked> 剩料区
+                <input type="checkbox" id="scrapAreaCheckbox" checked> To Mixed Leftover Area
             </label>
         </div>
 
         <div class="stats">
             <div class="stat-card">
-                <div class="stat-label">用了</div>
+                <div class="stat-label">Used</div>
                 <div class="stat-value" id="usedArea">0.00</div>
-                <div class="stat-sub">平方英尺</div>
+                <div class="stat-sub">sq ft</div>
             </div>
             <div class="stat-card">
-                <div class="stat-label">放回</div>
+                <div class="stat-label">Stored</div>
                 <div class="stat-value" id="returnArea">0.00</div>
-                <div class="stat-sub">平方英尺</div>
+                <div class="stat-sub">sq ft</div>
             </div>
             <div class="stat-card">
-                <div class="stat-label">剩料</div>
+                <div class="stat-label">Mixed Leftover</div>
                 <div class="stat-value" id="scrapArea">0.00</div>
-                <div class="stat-sub">平方英尺</div>
+                <div class="stat-sub">sq ft</div>
             </div>
         </div>
 
-        <div class="hint">每个格子独立切换 · 剩余面积归入选中的去向</div>
+        <div class="hint">Tap each cell independently · Remaining area goes to the selected destination</div>
     </div>
 
     <div class="toast" id="toast"></div>
@@ -465,7 +493,12 @@
             let currentSource = 'new';
             let editMode = 'initial';
             let pieceCount = 1;
-            let highlights = new Array(8).fill(false);
+
+            // 完整新料模式的勾选状态（和剩料模式分开存，互不干扰）
+            let newHighlights = new Array(8).fill(false);
+            // 剩料 / 仓库剩料模式的「初始剩料」格
+            let scrapInitial = new Array(8).fill(false);
+            // 剩料 / 仓库剩料模式的「使用面积」格（必须是 scrapInitial 的子集）
             let usageMarks = new Array(8).fill(false);
 
             const cells = document.querySelectorAll('.cell');
@@ -502,13 +535,12 @@
                 let usedCount, remainCount;
 
                 if (isScrapMode()) {
-                    // 使用面积模式
-                    const initialCount = highlights.filter(Boolean).length;
+                    const initialCount = scrapInitial.filter(Boolean).length;
                     const usageCount = usageMarks.filter(Boolean).length;
                     usedCount = usageCount;
                     remainCount = initialCount - usageCount;
                 } else {
-                    const c = highlights.filter(Boolean).length;
+                    const c = newHighlights.filter(Boolean).length;
                     usedCount = c;
                     remainCount = 8 - c;
                 }
@@ -544,13 +576,13 @@
             function renderHighlights() {
                 cells.forEach((cell, i) => {
                     if (isScrapMode()) {
-                        const isInitial = highlights[i];
-                        const isUsage = usageMarks[i] && highlights[i];
+                        const isInitial = scrapInitial[i];
+                        const isUsage = usageMarks[i] && scrapInitial[i];
                         cell.classList.toggle('initial', isInitial && !isUsage);
                         cell.classList.toggle('highlight', isUsage);
                     } else {
                         cell.classList.remove('initial');
-                        cell.classList.toggle('highlight', highlights[i]);
+                        cell.classList.toggle('highlight', newHighlights[i]);
                     }
                 });
             }
@@ -573,16 +605,16 @@
 
                 if (isScrapMode()) {
                     if (editMode === 'initial') {
-                        highlights[idx] = !highlights[idx];
-                        if (!highlights[idx]) {
+                        scrapInitial[idx] = !scrapInitial[idx];
+                        if (!scrapInitial[idx]) {
                             usageMarks[idx] = false;
                         }
                     } else {
-                        if (!highlights[idx]) return;
+                        if (!scrapInitial[idx]) return;
                         usageMarks[idx] = !usageMarks[idx];
                     }
                 } else {
-                    highlights[idx] = !highlights[idx];
+                    newHighlights[idx] = !newHighlights[idx];
                 }
 
                 renderHighlights();
@@ -596,20 +628,20 @@
                 if (toastTimer) clearTimeout(toastTimer);
                 toastTimer = setTimeout(() => {
                     toast.classList.remove('show');
-                }, 2200);
+                }, 2400);
             }
 
             function checkOverflow() {
                 if (!isScrapMode()) return;
                 if (editMode !== 'initial') return;
 
-                const count = highlights.filter(Boolean).length;
+                const count = scrapInitial.filter(Boolean).length;
                 if (count >= 8) {
-                    highlights[4] = false;
+                    scrapInitial[4] = false;
                     usageMarks[4] = false;
                     renderHighlights();
                     recalc();
-                    showToast('剩料不能覆盖整片，已自动移除左下角一格');
+                    showToast('A leftover cannot cover the whole sheet — bottom-left cell removed');
                 }
             }
 
@@ -704,6 +736,10 @@
                     btn.addEventListener('click', () => {
                         const src = btn.dataset.source;
                         if (src === currentSource) return;
+
+                        const wasNew = (currentSource === 'new');
+                        const nowScrap = (src === 'scrap' || src === 'warehouse');
+
                         sourceBtns.forEach(b => b.classList.remove('active'));
                         btn.classList.add('active');
                         currentSource = src;
@@ -714,7 +750,15 @@
                         editMode = 'initial';
                         modeBtns.forEach(b => b.classList.toggle('active', b.dataset.mode === 'initial'));
 
-                        usageMarks = new Array(8).fill(false);
+                        // 从「完整新料」切到「剩料 / 仓库剩料」：
+                        // 把完整新料的勾选复制过来作为剩料的初始轮廓，
+                        // 并清空使用面积。之后再 checkOverflow 处理满格情况。
+                        if (wasNew && nowScrap) {
+                            scrapInitial = newHighlights.slice();
+                            usageMarks = new Array(8).fill(false);
+                        }
+                        // 从剩料切到仓库剩料（或反向）：保留 scrapInitial / usageMarks
+                        // 从剩料类切回完整新料：newHighlights 原封不动
 
                         updateModeSwitchVisibility();
                         renderHighlights();
